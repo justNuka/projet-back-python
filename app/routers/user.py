@@ -23,7 +23,7 @@ def hash_password(password: str):
 @router.get("/users")
 def getUser() -> list[User]:
     """
-    Récupérer tout les utilisateurs
+    Récupérer tous les utilisateurs
     """
     if len(users) == 0:
         return Response(status_code=204)

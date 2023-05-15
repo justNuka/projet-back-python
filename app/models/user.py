@@ -5,14 +5,12 @@ from pydantic import BaseModel
 
 
 class User(BaseModel):
-    id: int = None
+    id_user: int = None
     name: str
     surname: str
     email: str
     password_hash: str
     tel: str
-    newletter: bool
-    is_client: bool
 
 class UserOptionnalFields(BaseModel):
     name: str = None
@@ -20,5 +18,3 @@ class UserOptionnalFields(BaseModel):
     email: str = None
     password_hash: str = None
     tel: str = None
-    newsletter: bool = None
-    is_client: bool = None
