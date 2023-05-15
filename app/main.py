@@ -2,8 +2,8 @@
 # Libs imports
 from fastapi import FastAPI, status
 # Local imports
-from routers import user, cars
-from internals import auth
+from routers import user, entreprise, planning
+from auth import auth
 
 app = FastAPI()
 
