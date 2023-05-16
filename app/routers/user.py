@@ -4,7 +4,7 @@ from fastapi import APIRouter, status, HTTPException, Response
 from pydantic import BaseModel
 # Local Imports
 from models.user import User, UserOptionnalFields
-from db.user import users as usersDefaultList
+from config.user import users as usersDefaultList
 
 
 router = APIRouter()

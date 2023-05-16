@@ -4,7 +4,7 @@ from fastapi import APIRouter, status, HTTPException, Response
 from pydantic import BaseModel
 # Local Imports
 from models.entreprise import Entreprise, EntrepriseOptionnalFields
-from db.entreprise import entreprises as entreprisesDefaultList
+from config.entreprise import entreprises as entreprisesDefaultList
 
 
 router = APIRouter()

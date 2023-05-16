@@ -1,8 +1,22 @@
 # System imports
-from enum import Enum
+
 # Libs imports
 from pydantic import BaseModel
+from sqlalchemy.sql.sqltypes import Integer,String
+from sqlalchemy import Table, Column
+# Local imports
+from config.db import meta
+from models.user import User
 
+users = Table(
+    "user",meta,
+    Column("id",Integer,primary_key=True),
+    Column("name",String(255)),
+    Column("surname",String(255)),
+    Column("email",String(255)),
+    Column("password_hash",String(255)),
+    Column("tel",String(255)),
+)
 
 class User(BaseModel):
     id: int = None

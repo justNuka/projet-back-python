@@ -1,5 +1,13 @@
+# System imports
+
+# Libs imports
+from pydantic import BaseModel
+from sqlalchemy.sql.sqltypes import Integer,String
+from sqlalchemy import Table, Column
 # Local imports
+from config.db import meta
 from models.entreprise import Entreprise
+
 
 entreprises: list[Entreprise] = [
     {

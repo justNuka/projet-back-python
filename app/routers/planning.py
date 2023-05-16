@@ -3,7 +3,7 @@ from fastapi import APIRouter, status, HTTPException, Response
 from pydantic import BaseModel
 # Local Imports
 from models.planning import Planning, PlanningOptionnalFields
-from db.planning import plannings as planningsDefaultList
+from config.planning import plannings as planningsDefaultList
 
 
 router = APIRouter()
