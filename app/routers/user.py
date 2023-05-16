@@ -11,6 +11,8 @@ from config.db import conn
 
 router = APIRouter()
 
+# Fonctions qui seront amenées à être utilisées dans le fichier
+
 """
 Fonction de génération des clés RSA
 """
@@ -43,6 +45,32 @@ def user_exists(email: str, name: str, surname: str) -> bool:
 
     count = result.fetchone()[0]
     return count > 0
+
+def get_user_by_id(user_id: int) -> User:
+    """
+    Récupérer un utilisateur par son ID
+    """
+    query = text("SELECT name, surname, email, tel FROM users WHERE id = :user_id")
+    result = conn.execute(query, user_id=user_id)
+    data = result.fetchone()
+
+    if data is None:
+        return None
+
+    name = rsa.decrypt(data[0], private_key).decode('utf-8')
+    surname = rsa.decrypt(data[1], private_key).decode('utf-8')
+    email = rsa.decrypt(data[2], private_key).decode('utf-8')
+    tel = rsa.decrypt(data[3], private_key).decode('utf-8')
+
+    user = User(
+        id=user_id,
+        name=name,
+        surname=surname,
+        email=email,
+        tel=tel,
+    )
+
+    return user
 
 
 @router.get("/users")
@@ -140,8 +168,6 @@ def create_user(name: str, surname: str, email: str, password: str, tel: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
-
 @router.delete("/users/{user_id}")
 def delete_user(user_id: int):
     """
@@ -157,32 +183,6 @@ def delete_user(user_id: int):
         return {"message": "Utilisateur supprimé avec succès"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-def get_user_by_id(user_id: int) -> User:
-    """
-    Récupérer un utilisateur par son ID
-    """
-    query = text("SELECT name, surname, email, tel FROM users WHERE id = :user_id")
-    result = conn.execute(query, user_id=user_id)
-    data = result.fetchone()
-
-    if data is None:
-        return None
-
-    name = rsa.decrypt(data[0], private_key).decode('utf-8')
-    surname = rsa.decrypt(data[1], private_key).decode('utf-8')
-    email = rsa.decrypt(data[2], private_key).decode('utf-8')
-    tel = rsa.decrypt(data[3], private_key).decode('utf-8')
-
-    user = User(
-        id=user_id,
-        name=name,
-        surname=surname,
-        email=email,
-        tel=tel,
-    )
-
-    return user
 
 @router.put("/users/{user_id}")
 def update_user(user_id: int, user_data: dict):

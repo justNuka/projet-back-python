@@ -8,7 +8,7 @@ from sqlalchemy.sql.sqltypes import Integer,String, Boolean, LargeBinary
 from config.db import meta
 
 users = Table(
-    "user",meta,
+    "users",meta,
     Column("id",Integer,primary_key=True),
     Column("name",LargeBinary),
     Column("surname",LargeBinary),

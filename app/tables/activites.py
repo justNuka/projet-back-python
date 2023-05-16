@@ -7,8 +7,8 @@ from sqlalchemy.sql.sqltypes import Integer,String
 #Local import
 from config.db import meta
 
-plannings = Table(
-    "planning",meta,
+activites = Table(
+    "activites",meta,
     Column("id",Integer,primary_key=True),
     Column("title",String(255)),
     Column("entreprise",Integer),

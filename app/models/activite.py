@@ -6,7 +6,7 @@ from pydantic import BaseModel
 # Local imports
 
 
-class Planning(BaseModel):
+class Activite(BaseModel):
     id: int = None
     title: str
     entreprise: int

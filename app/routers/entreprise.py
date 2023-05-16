@@ -9,71 +9,158 @@ from config.db import conn
 
 router = APIRouter()
 
+# Fonctions qui seront amenées à être utilisées dans le fichier
+
+"""
+Fonction qui permet de vérifier si une entreprise avec le meme nom
+"""
+def entreprise_exists(firmName: str) -> bool:
+    query = text("SELECT COUNT(*) FROM entreprises WHERE firmName = :firmName)")
+    result = conn.execute(query, firmName=firmName)
+
+    """
+    Récupérer le nombre de lignes retournées par la requête
+    result.fetchone() retourne une seule ligne à la fois
+    """
+
+    count = result.fetchone()[0]
+    return count > 0
+
+def get_entreprise_by_id(entreprise_id: int) -> Entreprise:
+    """
+    Récupérer une entreprise par son ID
+    """
+    query = text("SELECT firmName, location FROM entreprises WHERE id = :entreprise_id")
+    result = conn.execute(query, entreprise_id=entreprise_id)
+    data = result.fetchone()
+
+    if data is None:
+        return None
+    
+    entreprise = Entreprise(
+        id=entreprise_id,
+        firmName=data[0],
+        location=data[1],
+    )
+
+    return entreprise
+
 @router.get("/entreprises")
-def getEntreprise() -> list[Entreprise]:
+def get_all_entreprises():
     """
     Récupérer toutes les entreprises
-    Vérifie si la liste est vide, si oui, retourne un code 204
     """
-    if len(entreprises) == 0:
-        return Response(status_code=204)
+    query = text("SELECT nameFirm, location FROM entreprises")
+    result = conn.execute(query)
+    data = result.fetchall()
+
+    entreprises = []
+    for row in data:
+        name_firm = row[0]
+        location = row[1]
+
+        entreprise = {
+            "nameFirm": name_firm,
+            "location": location,
+        }
+
+        entreprises.append(entreprise)
+
     return entreprises
 
 
-@router.get("/entreprises/search")
-async def getEntrepriseByFirmName(nameFirm: str):
+@router.get("/entreprises")
+def get_entreprises_by_firm_name(firm_name: str):
     """
-    Récupérer une entreprise par son nom
+    Récupérer les entreprises par nom d'entreprise (firmName)
     """
-    return list(filter(lambda x: x["name"] == nameFirm, entreprises))
+    query = text("SELECT nameFirm, location FROM entreprises WHERE nameFirm = :firm_name")
+    result = conn.execute(query, firm_name=firm_name)
+    data = result.fetchall()
 
+    entreprises = []
+    for row in data:
+        name_firm = row[0]
+        location = row[1]
 
-@router.post("/entreprises", status_code=status.HTTP_201_CREATED)
-async def createEntreprise(entreprise: Entreprise) -> Entreprise:
+        entreprise = {
+            "nameFirm": name_firm,
+            "location": location,
+        }
+
+        entreprises.append(entreprise)
+
+    return entreprises
+
+@router.post("/entreprises")
+def create_entreprise(firmName: str, location: str):
     """
-    Créer une entreprise
+    Créer un nouvel utilisateur
     """
-    if entreprise.firmName.lower() in [(entreprise["firmName"]).lower() for entreprise in entreprises]:
-        raise HTTPException(status_code=400, detail="Firm name already used")
-    entreprise.id = entreprises[-1]["id"] + 1
-    entreprise.append(entreprise.__dict__)
-    return entreprise
+    if entreprise_exists(firmName=firmName):
+        raise HTTPException(status_code=409, detail="Une entreprise avec même nom existe déjà")
 
+    # Préparation de la requête SQL
+    query = text("INSERT INTO entreprises (firmName, location) VALUES (:firmName, :location)")
+    
+    # Exécution de la requête SQL
+    try:
+        conn.execute(query, firmName=firmName, location=location)
+        return {"message": "Entreprise créée avec succès"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-@router.delete("/entreprise/{entrepriseId}")
-async def deleteEntrepriseById(entrepriseId: int) -> Entreprise:
+@router.delete("/entreprises/{entreprise_id}")
+def delete_entreprise(entreprise_id: int):
     """
-    Supprimer une entreprise par son id
+    Supprimer une entreprise
     """
-    oldEntreprise = list(filter(lambda x: x["id"] == entrepriseId, entreprises))
-    entreprises.remove(oldEntreprise[0])
-    return oldEntreprise[0]
-
-
-@router.put("/entreprises/{entrepriseId}")
-async def updateEntrepriseById(entrepriseId: int, user: Entreprise) -> Entreprise:
+    query = text("DELETE FROM entreprises WHERE id = :entreprise_id")
+    try:
+        conn.execute(query, entreprise_id=entreprise_id)
+        return {"message": "Entreprise supprimée avec succès"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@router.put("/entreprises/{entreprise_id}")
+def update_entreprise(entreprise_id: int, firmName: str, location: str):
     """
-    Mettre à jour une entreprise par son id
+    Mettre à jour une entreprise
     """
-    oldUser = list(filter(lambda x: x["id"] == entrepriseId, entreprises))
-    entreprises.remove(oldUser[0])
-    entreprises.append(user.__dict__)
-    return Entreprise
+    query = text("UPDATE entreprises SET firmName = :firmName, location = :location WHERE id = :entreprise_id")
+    try:
+        conn.execute(query, firmName=firmName, location=location, entreprise_id=entreprise_id)
+        return {"message": "Entreprise mise à jour avec succès"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-
-@router.patch("/entreprises/{entrepriseId}")
-async def updateEntrepriseById(entrepriseId: int, entreprise: EntrepriseOptionnalFields) -> Entreprise:
+@router.patch("/entreprises/{entreprise_id}")
+def partial_update_entreprise(entreprise_id: int, entreprise_data: dict):
     """
-    Mettre à jour une entreprise par son id
+    Mettre à jour partiellement une entreprise par son ID
     """
-    oldEntreprise = list(filter(lambda x: x["id"] == entrepriseId, entreprises))
+    existing_entreprise = get_entreprise_by_id(entreprise_id)
+    if not existing_entreprise:
+        raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
 
-    entreprises.remove(oldEntreprise[0])
+    # Récupérer les données existantes de l'entreprise
+    firmName = existing_entreprise.firmName
+    location = existing_entreprise.location
 
-    if entreprise.firmName is not None:
-        oldEntreprise[0]["nameFirm"] = entreprise.firmName
-    if entreprise.location is not None:
-        oldEntreprise[0]["location"] = entreprise.location
+    # Mettre à jour les champs spécifiés dans entreprise_data
+    if "firmName" in entreprise_data:
+        name = entreprise_data["firmName"]
+    if "location" in entreprise_data:
+        surname = entreprise_data["location"]
 
-    entreprises.append(oldEntreprise[0].__dict__)
-    return oldEntreprise[0]
+    query = text("UPDATE entreprises SET firmName = :firmName, location = :location WHERE id = :entreprise_id")
+    try:
+        conn.execute(
+            query,
+            firmName = firmName,
+            location = location,
+            entreprise_id=entreprise_id,
+        )
+        return {"message": "Entreprise mise à jour avec succès"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
