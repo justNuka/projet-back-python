@@ -3,6 +3,7 @@
 # Libs Imports
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import text
+from pydantic import Depends
 # Local Imports
 from models.entreprise import Entreprise
 from models.user import User
@@ -97,7 +98,7 @@ def get_entreprises_by_firm_name(firm_name: str):
     return entreprises
 
 @router.post("/entreprises")
-def create_entreprise(firmName: str, location: str):
+def create_entreprise(firmName: str, location: str,  current_user: User = Depends(decode_token)):
     """
     Créer un nouvel utilisateur
     """
@@ -115,10 +116,22 @@ def create_entreprise(firmName: str, location: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.delete("/entreprises/{entreprise_id}")
-def delete_entreprise(entreprise_id: int):
+def delete_entreprise(entreprise_id: int,  current_user: User = Depends(decode_token)):
     """
     Supprimer une entreprise
     """
+    existing_entreprise = get_entreprise_by_id(entreprise_id)
+    if not existing_entreprise:
+        raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+    
+    # Vérification du rôle "maintainer"
+    if not current_user.maintainer:
+        raise HTTPException(status_code=403, detail="Vous n'avez pas les droits nécessaires pour effectuer cette action")
+
+    # Vérification de l'ID de l'entreprise
+    if current_user.entreprise != existing_entreprise.entreprise:
+        raise HTTPException(status_code=403, detail="Vous n'êtes pas autorisé à modifier cette entreprise")
+    
     query = text("DELETE FROM entreprises WHERE id = :entreprise_id")
     try:
         conn.execute(query, entreprise_id=entreprise_id)
@@ -127,10 +140,21 @@ def delete_entreprise(entreprise_id: int):
         raise HTTPException(status_code=500, detail=str(e))
     
 @router.put("/entreprises/{entreprise_id}")
-def update_entreprise(entreprise_id: int, firmName: str, location: str):
+def update_entreprise(entreprise_id: int, firmName: str, location: str, current_user: User = Depends(decode_token)):
     """
     Mettre à jour une entreprise
     """
+    existing_entreprise = get_entreprise_by_id(entreprise_id)
+    if not existing_entreprise:
+        raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+    
+    # Vérification du rôle "maintainer"
+    if not current_user.maintainer:
+        raise HTTPException(status_code=403, detail="Vous n'avez pas les droits nécessaires pour effectuer cette action")
+
+    # Vérification de l'ID de l'entreprise
+    if current_user.entreprise != existing_entreprise.entreprise:
+        raise HTTPException(status_code=403, detail="Vous n'êtes pas autorisé à modifier cette entreprise")
     query = text("UPDATE entreprises SET firmName = :firmName, location = :location WHERE id = :entreprise_id")
     try:
         conn.execute(query, firmName=firmName, location=location, entreprise_id=entreprise_id)
@@ -139,14 +163,23 @@ def update_entreprise(entreprise_id: int, firmName: str, location: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.patch("/entreprises/{entreprise_id}")
-def partial_update_entreprise(entreprise_id: int, entreprise_data: dict):
+def partial_update_entreprise(entreprise_id: int, entreprise_data: dict, current_user: User = Depends(decode_token)):
     """
     Mettre à jour partiellement une entreprise par son ID
-    """
+    """    
     existing_entreprise = get_entreprise_by_id(entreprise_id)
     if not existing_entreprise:
         raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+    
 
+    # Vérification du rôle "maintainer"
+    if not current_user.maintainer:
+        raise HTTPException(status_code=403, detail="Vous n'avez pas les droits nécessaires pour effectuer cette action")
+
+    # Vérification de l'ID de l'entreprise
+    if current_user.entreprise != existing_entreprise.entreprise:
+        raise HTTPException(status_code=403, detail="Vous n'êtes pas autorisé à modifier cette entreprise")
+    
     # Récupérer les données existantes de l'entreprise
     firmName = existing_entreprise.firmName
     location = existing_entreprise.location

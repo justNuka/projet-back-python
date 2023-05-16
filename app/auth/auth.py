@@ -18,7 +18,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 JWT_KEY = "cW1nT8kIC7L8ZnijSHckA2c8f4TgN0DQcI6utcVgZJUdyFv0v0Bek8hxSKESeQV0zjMaK56x2CrzrMuyQBVB7lZ3NiSdvuxJTu18YD55nIBQLRIklzaiYT24iDGJihxvqnsZsmuwJaRFpygLBoRTaa5kVp9eQdmSBWwQ3SooRWTwsWaZDm9CVm3yb3P3X4IAlaAJwT4k"
 
-# Variable global role, pour stocker le rôle de l'utilisateur et l'utiliser ailleurs
+# Variables globales entreprise et maitainer, pour stocker le rôle de l'utilisateur ainsi que son id entreprise et l'utiliser ailleurs
 is_maintainer = False
 entreprise = None
 

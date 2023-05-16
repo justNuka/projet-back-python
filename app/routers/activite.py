@@ -1,10 +1,8 @@
 # System Import
 
 # Libs Imports
-import hashlib
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import text
-import rsa
 from pydantic import Depends
 # Local Imports
 from models.activite import Activite
@@ -62,7 +60,7 @@ def get_activite_by_id(activite_id: int) -> Activite:
 
 
 @router.get("/activites")
-def get_all_entreprises():
+def get_all_activites():
     """
     Récupérer toutes les activités
     """
@@ -71,113 +69,142 @@ def get_all_entreprises():
     result = conn.execute(query)
     data = result.fetchall()
 
-    entreprises = []
+    activites = []
     for row in data:
-        name_firm = row[0]
-        location = row[1]
 
-        entreprise = {
-            "nameFirm": name_firm,
-            "location": location,
+        activite = Activite(**dict(row))
+
+        activite = {
+            "title": data[0],
+            "entreprise": data[1],
+            "user": data[2],
+            "created_by": data[3],
+            "start_date": data[4],
+            "end_date": data[5],
+            "description": data[6],
+            "city": data[7],
+            "address": data[8],
+            "zipCode": data[9],
+            "country": data[10],
         }
 
-        entreprises.append(entreprise)
+        activites.append(activite)
 
-    return entreprises
+    return activites
 
 
-@router.get("/entreprises/search")
-def get_entreprises_by_firm_name(firm_name: str):
+@router.get("/activites/search")
+def get_activites_by_title(title: str):
     """
-    Récupérer les entreprises par nom d'entreprise (firmName)
+    Récupérer les activités par leur titre
     """
-    query = text("SELECT nameFirm, location FROM entreprises WHERE nameFirm = :firm_name")
-    result = conn.execute(query, firm_name=firm_name)
+    query = text("SELECT title, entreprise, user, created_by, start_date, end_date, description, city, address, zipCode, country FROM activites WHERE title = :title")
+    result = conn.execute(query, title=title)
     data = result.fetchall()
 
-    entreprises = []
-    for row in data:
-        name_firm = row[0]
-        location = row[1]
+    activites = []
 
-        entreprise = {
-            "nameFirm": name_firm,
-            "location": location,
+    for row in data:
+        activite = Activite(**dict(row))
+
+        activite = {
+            "title": data[0],
+            "entreprise": data[1],
+            "user": data[2],
+            "created_by": data[3],
+            "start_date": data[4],
+            "end_date": data[5],
+            "description": data[6],
+            "city": data[7],
+            "address": data[8],
+            "zipCode": data[9],
+            "country": data[10],
         }
 
-        entreprises.append(entreprise)
+        activites.append(activite)
+    return activites
 
-    return entreprises
-
-@router.post("/entreprises")
-def create_entreprise(firmName: str, location: str):
+@router.post("/activites", status_code=status.HTTP_201_CREATED)
+def create_activite(title: str, entreprise: int, user: int, created_by: int, start_date: str, end_date: str, description: str, city: str, address: str, zipCode: str, country: str, current_user: User = Depends(decode_token)):
     """
     Créer un nouvel utilisateur
     """
-    if entreprise_exists(firmName=firmName):
-        raise HTTPException(status_code=409, detail="Une entreprise avec même nom existe déjà")
+    if not is_maintainer(current_user):
+        raise HTTPException(status_code=401, detail="Vous n'êtes pas autorisé à effectuer cette action")
 
-    # Préparation de la requête SQL
-    query = text("INSERT INTO entreprises (firmName, location) VALUES (:firmName, :location)")
+    if activite_exists(title, entreprise):
+        raise HTTPException(status_code=400, detail="Une activité avec le même titre existe déjà dans cette entreprise")
+
+    query = text("INSERT INTO activites (title, entreprise, user, created_by, start_date, end_date, description, city, address, zipCode, country) VALUES (:title, :entreprise, :user, :created_by, :start_date, :end_date, :description, :city, :address, :zipCode, :country)")
+    try:
+        conn.execute(query, title=title, entreprise=entreprise, user=user, created_by=created_by, start_date=start_date, end_date=end_date, description=description, city=city, address=address, zipCode=zipCode, country=country)
+        return {"message": "Activité créée avec succès"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/activites/{activite_id}")
+def delete_activite(activite_id: int, current_user: User = Depends(decode_token)):
+    """
+    Supprimer une activité par son ID
+    """
+    if not is_maintainer(current_user):
+        raise HTTPException(status_code=401, detail="Vous n'êtes pas autorisé à effectuer cette action")
+
+    query = text("DELETE FROM activites WHERE id = :activite_id")
+    try:
+        conn.execute(query, activite_id=activite_id)
+        return {"message": "Activité supprimée avec succès"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
     
-    # Exécution de la requête SQL
+@router.put("/activites/{activite_id}")
+def update_activite(activite_id: int, title: str, entreprise: int, user: int, created_by: int, start_date: str, end_date: str, description: str, city: str, address: str, zipCode: str, country: str, current_user: User = Depends(decode_token)):
+    """
+    Mettre à jour une activite par son ID
+    """
+    if not is_maintainer(current_user):
+        raise HTTPException(status_code=401, detail="Vous n'êtes pas autorisé à effectuer cette action")
+
+    existing_activite = get_activite_by_id(activite_id)
+    if not existing_activite:
+        raise HTTPException(status_code=404, detail="Activité non trouvée")
+
+    query = text("UPDATE activites SET title = :title, entreprise = :entreprise, user = :user, created_by = :created_by, start_date = :start_date, end_date = :end_date, description = :description, city = :city, address = :address, zipCode = :zipCode, country = :country WHERE id = :activite_id")
     try:
-        conn.execute(query, firmName=firmName, location=location)
-        return {"message": "Entreprise créée avec succès"}
+        conn.execute(query, title=title, entreprise=entreprise, user=user, created_by=created_by, start_date=start_date, end_date=end_date, description=description, city=city, address=address, zipCode=zipCode, country=country, activite_id=activite_id)
+        return {"message": "Activité mise à jour avec succès"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.delete("/entreprises/{entreprise_id}")
-def delete_entreprise(entreprise_id: int):
+@router.patch("/activites/{activite_id}")
+def update_activite(activite_id: int, activite_data: dict, current_user: User = Depends(decode_token)):
     """
-    Supprimer une entreprise
+    Mettre à jour une activité par son ID
     """
-    query = text("DELETE FROM entreprises WHERE id = :entreprise_id")
-    try:
-        conn.execute(query, entreprise_id=entreprise_id)
-        return {"message": "Entreprise supprimée avec succès"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
-@router.put("/entreprises/{entreprise_id}")
-def update_entreprise(entreprise_id: int, firmName: str, location: str):
-    """
-    Mettre à jour une entreprise
-    """
-    query = text("UPDATE entreprises SET firmName = :firmName, location = :location WHERE id = :entreprise_id")
-    try:
-        conn.execute(query, firmName=firmName, location=location, entreprise_id=entreprise_id)
-        return {"message": "Entreprise mise à jour avec succès"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    if not is_maintainer(current_user):
+        raise HTTPException(status_code=401, detail="Vous n'êtes pas autorisé à effectuer cette action")
 
-@router.patch("/entreprises/{entreprise_id}")
-def partial_update_entreprise(entreprise_id: int, entreprise_data: dict):
-    """
-    Mettre à jour partiellement une entreprise par son ID
-    """
-    existing_entreprise = get_entreprise_by_id(entreprise_id)
-    if not existing_entreprise:
-        raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+    existing_activite = get_activite_by_id(activite_id)
+    if not existing_activite:
+        raise HTTPException(status_code=404, detail="Activité non trouvée")
 
-    # Récupérer les données existantes de l'entreprise
-    firmName = existing_entreprise.firmName
-    location = existing_entreprise.location
-
-    # Mettre à jour les champs spécifiés dans entreprise_data
-    if "firmName" in entreprise_data:
-        name = entreprise_data["firmName"]
-    if "location" in entreprise_data:
-        surname = entreprise_data["location"]
-
-    query = text("UPDATE entreprises SET firmName = :firmName, location = :location WHERE id = :entreprise_id")
+    query = text("UPDATE activites SET title = :title, entreprise = :entreprise, user = :user, created_by = :created_by, start_date = :start_date, end_date = :end_date, description = :description, city = :city, address = :address, zipCode = :zipCode, country = :country WHERE id = :activite_id")
     try:
         conn.execute(
             query,
-            firmName = firmName,
-            location = location,
-            entreprise_id=entreprise_id,
+            title=activite_data["title"],
+            entreprise=activite_data["entreprise"],
+            user=activite_data["user"],
+            created_by=activite_data["created_by"],
+            start_date=activite_data["start_date"],
+            end_date=activite_data["end_date"],
+            description=activite_data["description"],
+            city=activite_data["city"],
+            address=activite_data["address"],
+            zipCode=activite_data["zipCode"],
+            country=activite_data["country"],
+            activite_id=activite_id
         )
-        return {"message": "Entreprise mise à jour avec succès"}
+        return {"message": "Activité mise à jour avec succès"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
