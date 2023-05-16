@@ -2,12 +2,16 @@
 
 # Libs Imports
 import hashlib
-from fastapi import APIRouter, status, HTTPException, Response
+from fastapi import APIRouter, HTTPException
 from sqlalchemy import text
 import rsa
+from pydantic import Depends
 # Local Imports
 from models.user import User
 from config.db import conn
+from auth.auth import is_maintainer 
+from auth.auth import entrepriseConnectee
+from auth.auth import decode_token
 
 router = APIRouter()
 
@@ -142,12 +146,16 @@ async def getUserBySurname(surname: str):
 
 
 @router.post("/users")
-def create_user(name: str, surname: str, email: str, password: str, tel: str):
+def create_user(name: str, surname: str, email: str, password: str, tel: str, entreprise: str, maintainer: bool = False, user: User = Depends(decode_token)):
     """
-    Créer un nouvel utilisateur
+    Crée un nouvel utilisateur
     """
     if user_exists(email, name, surname):
         raise HTTPException(status_code=409, detail="Un utilisateur avec le même email OU le même nom ET prénom existe déjà.")
+    
+    # Vérification du rôle "maintainer"
+    if not user.maintainer:
+        raise HTTPException(status_code=403, detail="Vous n'avez pas les droits nécessaires pour effectuer cette action")
 
     # Chiffrement des données avec la clé publique
     encrypted_name = rsa.encrypt(name.encode('utf-8'), public_key)
@@ -155,27 +163,38 @@ def create_user(name: str, surname: str, email: str, password: str, tel: str):
     encrypted_email = rsa.encrypt(email.encode('utf-8'), public_key)
     encrypted_tel = rsa.encrypt(tel.encode('utf-8'), public_key)
 
+    entreprise = entreprise
+    maintainer = maintainer
+    
     # Préparation de la requête SQL
     hashed_password = hash_password(password)
-    query = text("INSERT INTO users (name, surname, email, password, tel) "
-                 "VALUES (:name, :surname, :email, :password, :tel)")
+    query = text("INSERT INTO users (name, surname, email, password, tel, entreprise, maintainer) "
+                 "VALUES (:name, :surname, :email, :password, :tel, :entreprise, :maintainer)")
     
     # Exécution de la requête SQL
     try:
         conn.execute(query, name=encrypted_name, surname=encrypted_surname,
-                     email=encrypted_email, password=hashed_password, tel=encrypted_tel)
+                     email=encrypted_email, password=hashed_password, tel=encrypted_tel, entreprise=entreprise, maintainer=maintainer)
         return {"message": "Utilisateur créé avec succès"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.delete("/users/{user_id}")
-def delete_user(user_id: int):
+async def delete_user(user_id: int, user: User = Depends(decode_token)):
     """
     Supprimer un utilisateur par son ID
     """
-    user = get_user_by_id(user_id)
-    if not user:
+    existing_user = get_user_by_id(user_id)
+    if not existing_user:
         raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+
+    # Vérification du rôle "maintainer"
+    if not user.maintainer:
+        raise HTTPException(status_code=403, detail="Vous n'avez pas les droits nécessaires pour effectuer cette action")
+
+    # Vérification de l'ID de l'entreprise
+    if existing_user.entrepriseConnectee != user.entrepriseConnectee:
+        raise HTTPException(status_code=403, detail="Vous n'êtes pas autorisé à modifier cet utilisateur")
 
     query = text("DELETE FROM users WHERE id = :user_id")
     try:
@@ -184,14 +203,24 @@ def delete_user(user_id: int):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
+
 @router.put("/users/{user_id}")
-def update_user(user_id: int, user_data: dict):
+def update_user(user_id: int, user_data: dict, current_user: User = Depends(decode_token)):
     """
     Mettre à jour un utilisateur par son ID
     """
     existing_user = get_user_by_id(user_id)
     if not existing_user:
         raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+
+    # Vérification du rôle "maintainer"
+    if not current_user.maintainer:
+        raise HTTPException(status_code=403, detail="Vous n'avez pas les droits nécessaires pour effectuer cette action")
+
+    # Vérification de l'ID de l'entreprise
+    if current_user.entreprise != existing_user.entreprise:
+        raise HTTPException(status_code=403, detail="Vous n'êtes pas autorisé à modifier cet utilisateur")
 
     # Chiffrement des nouvelles données avec la clé publique
     encrypted_name = rsa.encrypt(user_data["name"].encode('utf-8'), public_key)
@@ -214,13 +243,21 @@ def update_user(user_id: int, user_data: dict):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.patch("/users/{user_id}")
-def partial_update_user(user_id: int, user_data: dict):
+def partial_update_user(user_id: int, user_data: dict, current_user: User = Depends(decode_token)):
     """
     Mettre à jour partiellement un utilisateur par son ID
     """
     existing_user = get_user_by_id(user_id)
     if not existing_user:
         raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+
+    # Vérification du rôle "maintainer"
+    if not current_user.maintainer:
+        raise HTTPException(status_code=403, detail="Vous n'avez pas les droits nécessaires pour effectuer cette action")
+
+    # Vérification de l'ID de l'entreprise
+    if current_user.entreprise != existing_user.entreprise:
+        raise HTTPException(status_code=403, detail="Vous n'êtes pas autorisé à modifier cet utilisateur")
 
     # Récupérer les données existantes de l'utilisateur
     name = existing_user.name

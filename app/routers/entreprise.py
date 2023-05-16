@@ -1,11 +1,15 @@
 # System Import
 
 # Libs Imports
-from fastapi import APIRouter, status, HTTPException, Response
+from fastapi import APIRouter, HTTPException
 from sqlalchemy import text
 # Local Imports
 from models.entreprise import Entreprise
+from models.user import User
 from config.db import conn
+from auth.auth import is_maintainer 
+from auth.auth import entreprise
+from auth.auth import decode_token
 
 router = APIRouter()
 
@@ -69,7 +73,7 @@ def get_all_entreprises():
     return entreprises
 
 
-@router.get("/entreprises")
+@router.get("/entreprises/search")
 def get_entreprises_by_firm_name(firm_name: str):
     """
     Récupérer les entreprises par nom d'entreprise (firmName)

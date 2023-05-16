@@ -2,7 +2,7 @@
 
 #Libs import
 from sqlalchemy import Table,Column
-from sqlalchemy.sql.sqltypes import Integer,String
+from sqlalchemy.sql.sqltypes import Integer,String, DateTime
 
 #Local import
 from config.db import meta
@@ -13,10 +13,9 @@ activites = Table(
     Column("title",String(255)),
     Column("entreprise",Integer),
     Column("user",String(255)),
-    Column("creation_at",String(255)),
     Column("created_by",Integer),
-    Column("start_date",String(255)),
-    Column("end_date",String(255)),
+    Column("start_date",DateTime),
+    Column("end_date",DateTime),
     Column("description",String(255)),
     Column("city",String(255)),
     Column("address",String(255)),
