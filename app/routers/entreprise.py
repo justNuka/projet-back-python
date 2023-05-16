@@ -1,23 +1,16 @@
-# Libs Imports
-import hashlib
-from fastapi import APIRouter, status, HTTPException, Response
-from pydantic import BaseModel
-# Local Imports
-from models.entreprise import Entreprise, EntrepriseOptionnalFields
-from config.entreprise import entreprises as entreprisesDefaultList
+# System Import
 
+# Libs Imports
+from fastapi import APIRouter, status, HTTPException, Response
+from sqlalchemy import text
+# Local Imports
+from models.entreprise import Entreprise
+from config.db import conn
 
 router = APIRouter()
 
-entreprises = []
-
-
-def init_data():
-    entreprises.extend(entreprisesDefaultList)
-
-
 @router.get("/entreprises")
-def getUser() -> list[Entreprise]:
+def getEntreprise() -> list[Entreprise]:
     """
     Récupérer toutes les entreprises
     Vérifie si la liste est vide, si oui, retourne un code 204

@@ -3,6 +3,7 @@
 from fastapi import FastAPI, status
 # Local imports
 from routers import user, entreprise, planning
+from tables import users, entreprises, plannings
 from auth import auth
 
 app = FastAPI()
