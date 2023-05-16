@@ -13,7 +13,6 @@ Pour pouvoir exécuter l'application, il faut dans un premier temps installer to
   - Avoir installé Docker (Docker Desktop conseillé) et docker-compose installés
   - Avoir installé pip pour permettre l'installation des dépendances
   - Posséder un serveur Sql (Xampp, simple d'utilisation et pratique). Une fois installé, le lancer, puis aller à l'adresse suivante : http://localhost/phpmyadmin/index.php. Une fois ceci fait, créer une nouvelle base de données, la renommer en `projet-back-python`. Dès que cela est fait, allez dans importer, puis selectionnez le fichier `projet-back-python.sql`, et cliquez sur exécuter. La base de données est maintenant créée et opérationnelle sur votre poste.
-  - Installer les requirements : 
-        - `pip install requirements.txt`
+  - Installer les requirements : `pip install requirements.txt`
 Une fois que tout cela est fait, pour lancer l'application, votre terminal doit être dans le dossier racine de ce répo. Tapez ensuite :
 `docker-compose up --build`
