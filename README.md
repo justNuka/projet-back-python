@@ -1,22 +1,22 @@
 ## Projet Back-end en Python
-C'est une application back-end développée en python, qui permet de gérer des users, des plannings ainsi que des entreprises
+C'est une application back-end développée en python, qui permet de gérer des users, des activités ainsi que des entreprises.
+Un swagger regroupant tous les endpoints implémentés est disponible à l'adresse : http://localhost:8080/docs une fois que toutes les étapes d'installation seront effectuées
+Un système de vérification y est implémenté : 
+  - Si un user qui n'a pas le rôle de "maintainer" tente de RUD des autres users, une erreur lui sera renvoyée.
+  - Si un maintainer d'une entreprise différente de celle à laquelle il appartient tente de modifier une activité, un user, ou même des infos de l'entreprise, une erreur lui sera renvoyée.
+Pour pouvoir utiliser cette application, commencez par cloner le répo git, puis suivez les instructions ci-dessous.
 
-## Documentation
-La documentation est automatiquement disponible sur FQDN:port/docs/ ou /redoc
-Le FQDN par défaut est localhost et le port par défaut est 80.
-
-## Run the application
-Deux modes possibles pour lancer l'application, celui recommandé est le mode Docker.
-Une fois lancée, l'application sera accessible à http://localhost sauf si vous avez changé le port 80 en autre chose.
+## Utilisation
+Utilisation de Docker (voir ci-dessous pour de plus ample informations)
 
 ## Docker mode
-requirements: docker and docker-compose installés
-Pour le lancer, votre terminal doit être dans le dossier racine de ce répo. Tapez ensuite :
-docker-compose up --build
+Pour pouvoir exécuter l'application, il faut dans un premier temps installer toutes les dépendances nécessaires : 
+  - Avoir installé Docker (Docker Desktop conseillé) et docker-compose installés.
+  - Avoir installé pip pour permettre l'installation des dépendances.
+  - Posséder un serveur Sql (Xampp, simple d'utilisation et pratique). Une fois installé, le lancer, puis aller à l'adresse suivante : http://localhost/phpmyadmin/index.php. Une fois ceci fait, créer une nouvelle base de données, la renommer en `projet-back-python`. Dès que cela est fait, allez dans importer, puis selectionnez le fichier `projet-back-python.sql`, et cliquez sur exécuter. La base de données est maintenant créée et opérationnelle sur votre poste.
+  - Installer les requirements : `pip install requirements.txt`
+Une fois que tout cela est fait, pour lancer l'application, votre terminal doit être dans le dossier racine de ce répo. Tapez ensuite :
+`docker-compose up --build`
 
-## Mode Uvicorne
-exigences : python3.10 ou supérieur installé
-Tout d'abord, installez les dépendances
-pip install -r requirements.txt
-Ensuite, lancez l'application :
-uvicorn app.main:app --host 0.0.0.0 --port 80
+## Run the application
+Une fois toutes les étapes du dessus effectuées, et l'application lancée, elle sera accessible à l'adresse : http://localhost:8080/docs.
