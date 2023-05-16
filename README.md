@@ -19,4 +19,4 @@ Une fois que tout cela est fait, pour lancer l'application, votre terminal doit 
 `docker-compose up --build`
 
 ## Run the application
-Une fois toutes les étapes du dessus effectuées, et l'application lancée, elle sera accessible à l'adresse : http://localhost:8080/docs.
+Une fois toutes les étapes du dessus effectuées, et l'application lancée, elle sera accessible à l'adresse : http://localhost:8080/docs. Vous pourrez alors tester les différents endpoints implémentés.

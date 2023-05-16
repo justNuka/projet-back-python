@@ -78,10 +78,16 @@ def get_user_by_id(user_id: int) -> User:
 
 
 @router.get("/users")
-def getUser() -> list[User]:
+def getUser(user: User= Depends(decode_token)) -> list[User]:
     """
     Récupérer tous les utilisateurs
     """
+    # Vérification de l'ID de l'entreprise
+    user_id = user.id
+    existing_user = get_user_by_id(user_id)
+    if existing_user.entrepriseConnectee != user.entrepriseConnectee:
+        raise HTTPException(status_code=403, detail="Vous n'avez pas accès à cette ressource")
+    
     query = text("SELECT * FROM users")
     result = conn.execute(query)
     data = result.fetchall()
@@ -113,10 +119,17 @@ def getUser() -> list[User]:
 
 
 @router.get("/users/search")
-async def getUserBySurname(surname: str):
+async def getUserBySurname(surname: str, user: User = Depends(decode_token)):
     """
     Récupérer un utilisateur par son nom
     """
+
+    # Vérification de l'ID de l'entreprise
+    user_id = user.id
+    existing_user = get_user_by_id(user_id)
+    if existing_user.entrepriseConnectee != user.entrepriseConnectee:
+        raise HTTPException(status_code=403, detail="Vous n'êtes pas autorisé à modifier cet utilisateur")
+    
     query = text("SELECT name, surname, email, tel FROM users WHERE surname = :surname")
     result = conn.execute(query, surname=surname)
     data = result.fetchall()
