@@ -4,7 +4,7 @@ from enum import Enum
 from pydantic import BaseModel
 
 class Entreprise(BaseModel):
-    id_entreprise: int = None
+    id: int = None
     nameFirm: str
     location: str
 

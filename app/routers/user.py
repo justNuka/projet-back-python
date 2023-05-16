@@ -24,6 +24,7 @@ def hash_password(password: str):
 def getUser() -> list[User]:
     """
     Récupérer tous les utilisateurs
+    Vérifie si la liste est vide, si oui, retourne un code 204
     """
     if len(users) == 0:
         return Response(status_code=204)
@@ -47,7 +48,7 @@ async def createUser(user: User) -> User:
         raise HTTPException(status_code=400, detail="Email already used")
     if user.username.lower() in [(user["username"]).lower() for user in users]:
         raise HTTPException(status_code=400, detail="Username already used")
-    user.id = users[-1]["id"] + 1
+    user.id_user = users[-1]["id"] + 1
     user.password_hash = hash_password(user.password_hash)
     users.append(user.__dict__)
     return user

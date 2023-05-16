@@ -1,102 +1,84 @@
 # Libs Imports
-import hashlib
 from fastapi import APIRouter, status, HTTPException, Response
 from pydantic import BaseModel
 # Local Imports
-from models.user import User, UserOptionnalFields
-from db.user import users as usersDefaultList
+from models.planning import Planning, PlanningOptionnalFields
+from db.planning import plannings as planningsDefaultList
 
 
 router = APIRouter()
 
-users = []
+plannings = []
 
 
 def init_data():
-    users.extend(usersDefaultList)
+    plannings.extend(planningsDefaultList)
 
-
-def hash_password(password: str):
-    return hashlib.sha256(f'{password}'.encode('utf-8')).hexdigest()
-
-
-@router.get("/users")
-def getUser() -> list[User]:
+@router.get("/plannings")
+def getPlanning() -> list[Planning]:
     """
-    Récupérer tous les utilisateurs
+    Récupérer tous les planings
+    Vérifie si la liste est vide, si oui, retourne un code 204
     """
-    if len(users) == 0:
+    if len(plannings) == 0:
         return Response(status_code=204)
-    return users
+    return plannings
 
 
-@router.get("/users/search")
-async def getUserByUserName(userName: str):
+@router.get("/plannings/search")
+async def getPlanningByPlanningTitle(planningTitle: str):
     """
-    Récupérer un utilisateur par son nom
+    Récupérer un planning par son titre
     """
-    return list(filter(lambda x: x["name"] == userName, users))
+    return list(filter(lambda x: x["title"] == planningTitle, plannings))
 
 
-@router.post("/users", status_code=status.HTTP_201_CREATED)
-async def createUser(user: User) -> User:
+@router.post("/plannings", status_code=status.HTTP_201_CREATED)
+async def createPlanning(planning: Planning) -> Planning:
     """
-    Créer un utilisateur
+    Crée un planning
     """
-    if user.email.lower() in [(user["email"]).lower() for user in users]:
-        raise HTTPException(status_code=400, detail="Email already used")
-    if user.username.lower() in [(user["username"]).lower() for user in users]:
-        raise HTTPException(status_code=400, detail="Username already used")
-    user.id = users[-1]["id"] + 1
-    user.password_hash = hash_password(user.password_hash)
-    users.append(user.__dict__)
-    return user
+    if planning.title.lower() in [(planning["title"]).lower() for planning in plannings]:
+        raise HTTPException(status_code=400, detail="A planning with the same title is already created")
+    planning.id = plannings[-1]["id"] + 1
+    plannings.append(planning.__dict__)
+    return planning
 
 
-@router.delete("/users/{userId}")
-async def deleteUserById(userId: int) -> User:
+@router.delete("/plannings/{planningId}")
+async def deletePlanningById(planningId: int) -> Planning:
     """
-    Supprimer un utilisateur par son id
+    Supprimer un planning par son id
     """
-    oldUser = list(filter(lambda x: x["id"] == userId, users))
-    users.remove(oldUser[0])
-    return oldUser[0]
+    oldPlanning = list(filter(lambda x: x["id"] == planningId, plannings))
+    plannings.remove(oldPlanning[0])
+    return oldPlanning[0]
 
 
-@router.put("/users/{userId}")
-async def updateUserById(userId: int, user: User) -> User:
+@router.put("plannings/{planningId}")
+async def updatePlanningById(planningId: int, planning: Planning) -> Planning:
     """
-    Mettre à jour un utilisateur par son id
+    Mettre à jour un planning par son id
     """
-    oldUser = list(filter(lambda x: x["id"] == userId, users))
-    users.remove(oldUser[0])
-    users.append(user.__dict__)
-    return user
+    oldPlanning = list(filter(lambda x: x["id"] == planningId, plannings))
+    plannings.remove(oldPlanning[0])
+    plannings.append(planning.__dict__)
+    return planning
 
 
-@router.patch("/users/{userId}")
-async def updateUserById(userId: int, user: UserOptionnalFields) -> User:
+@router.patch("/plannings/{planningId}")
+async def updatePlanningById(planningId: int, planning: PlanningOptionnalFields) -> Planning:
     """
-    Mettre à jour un utilisateur par son id
+    Mettre à jour un planning par son id
     """
-    oldUser = list(filter(lambda x: x["id"] == userId, users))
+    oldPlanning = list(filter(lambda x: x["id"] == planningId, plannings))
 
-    users.remove(oldUser[0])
+    plannings.remove(oldPlanning[0])
 
-    if user.name is not None:
-        oldUser[0]["name"] = user.name
-    if user.surname is not None:
-        oldUser[0]["surname"] = user.surname
-    if user.email is not None:
-        oldUser[0]["email"] = user.email
-    if user.password_hash is not None:
-        oldUser[0]["password_hash"] = hash_password(user.password_hash)
-    if user.tel is not None:
-        oldUser[0]["tel"] = user.tel
-    if user.newsletter is not None:
-        oldUser[0]["newsletter"] = user.newsletter
-    if user.is_client is not None:
-        oldUser[0]["is_client"] = user.is_client
+    if planning.title is not None:
+        oldPlanning[0]["name"] = planning.title
+    if planning.description is not None:
+        oldPlanning[0]["description"] = planning.description
 
-    users.append(oldUser[0].__dict__)
-    return oldUser[0]
+    plannings.append(oldPlanning[0].__dict__)
+    return oldPlanning[0]

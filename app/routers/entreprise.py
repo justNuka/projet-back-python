@@ -20,6 +20,7 @@ def init_data():
 def getUser() -> list[Entreprise]:
     """
     Récupérer toutes les entreprises
+    Vérifie si la liste est vide, si oui, retourne un code 204
     """
     if len(entreprises) == 0:
         return Response(status_code=204)
@@ -41,7 +42,7 @@ async def createEntreprise(entreprise: Entreprise) -> Entreprise:
     """
     if entreprise.firmName.lower() in [(entreprise["firmName"]).lower() for entreprise in entreprises]:
         raise HTTPException(status_code=400, detail="Firm name already used")
-    entreprise.id_entreprise = entreprises[-1]["id"] + 1
+    entreprise.id = entreprises[-1]["id"] + 1
     entreprise.append(entreprise.__dict__)
     return entreprise
 
