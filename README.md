@@ -6,6 +6,19 @@ Un système de vérification y est implémenté :
   - Si un maintainer d'une entreprise différente de celle à laquelle il appartient tente de modifier une activité, un user, ou même des infos de l'entreprise, une erreur lui sera renvoyée.
 Pour pouvoir utiliser cette application, commencez par cloner le répo git, puis suivez les instructions ci-dessous.
 
+## Architecture du projet 
+À la racine du projet, on trouve :
+  - Les fichiers `.gitignore`, `Dockerfile`, `docker-compose.yml`, `README.md`, `projet-back-python.sql` et `requirements.txt`.
+  - Le dossier app contenant tout le code.
+
+Dans le dossier app on retouve plusieurs dossiers et un fichier :
+  - auth : contient le fichier auth qui permet l'authentification (login).
+  - config : contient le fichier `db.py` qui permet la connexion à la bdd.
+  - models : contient 3 fichiers (user, activite, entreprise) qui définissent les classes.
+  - routers : contient 3 fichiers (user, activite, entreprise) qui définissent les endpoints de l'application.
+  - tables : contient 3 fichiers (users, activites, entreprises) qui définissent les tables de la bdd.
+  - fichier `main.py` qui contient `app = FastAPI()` (permet d'initialiser l'application) ainsi que les réponses personnalisées et les différents tags
+
 ## Installation / Setup
 Utilisation de Docker (voir ci-dessous pour de plus ample informations)
 Pour pouvoir exécuter l'application, il faut dans un premier temps installer toutes les dépendances nécessaires : 
