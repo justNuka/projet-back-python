@@ -49,7 +49,7 @@ async def decode_token(token: str = Depends(oauth2_scheme)) -> User:
         decoded = jwt.decode(token, JWT_KEY, algorithms=["HS256"])
         user_id = decoded.get("id")
         
-        # Récupérer le rôle "maintainer" de l'utilisateur à partir de la base de données
+        # Récupérer le rôle de l'utilisateur à partir de la base de données
         query = text("SELECT entreprise, maintainer FROM users WHERE id = :user_id")
         result = await conn.execute(query, user_id=user_id)
         data = await result.fetchone()

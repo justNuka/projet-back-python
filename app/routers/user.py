@@ -159,8 +159,8 @@ def create_user(name: str, surname: str, email: str, password: str, tel: str, en
     if user_exists(email, name, surname):
         raise HTTPException(status_code=409, detail="Un utilisateur avec le même email OU le même nom ET prénom existe déjà.")
     
-    # Vérification du rôle "maintainer"
-    if not user.maintainer:
+    # Vérification du rôle
+    if user.role != "admin" or user.role != "maintainer":
         raise HTTPException(status_code=403, detail="Vous n'avez pas les droits nécessaires pour effectuer cette action")
 
     # Chiffrement des données avec la clé publique
@@ -195,7 +195,7 @@ async def delete_user(user_id: int, user: User = Depends(decode_token)):
         raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
 
     # Vérification du rôle "maintainer"
-    if not user.maintainer:
+    if user.role != "admin" or user.role != "maintainer":
         raise HTTPException(status_code=403, detail="Vous n'avez pas les droits nécessaires pour effectuer cette action")
 
     # Vérification de l'ID de l'entreprise
@@ -219,7 +219,7 @@ def partial_update_user(user_id: int, user_data: dict, current_user: User = Depe
         raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
 
     # Vérification du rôle "maintainer"
-    if not current_user.maintainer:
+    if current_user.role != "admin" or current_user.role != "maintainer":
         raise HTTPException(status_code=403, detail="Vous n'avez pas les droits nécessaires pour effectuer cette action")
 
     # Vérification de l'ID de l'entreprise

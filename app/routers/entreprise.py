@@ -8,9 +8,7 @@ from pydantic import Depends
 from models.entreprise import Entreprise
 from models.user import User
 from config.db import conn
-from auth.auth import is_maintainer 
-from auth.auth import entreprise
-from auth.auth import decode_token
+from auth.auth import role , decode_token, entrepriseConnectee
 
 router = APIRouter()
 
@@ -50,7 +48,7 @@ def get_entreprise_by_id(entreprise_id: int) -> Entreprise:
 
     return entreprise
 
-@router.get("/entreprises")
+@router.get("/entreprises", user: User = Depends(decode_token))
 def get_all_entreprises():
     """
     Récupérer toutes les entreprises
@@ -75,10 +73,14 @@ def get_all_entreprises():
 
 
 @router.get("/entreprises/search")
-def get_entreprises_by_firm_name(firm_name: str):
+def get_entreprises_by_firm_name(firm_name: str, user: User = Depends(decode_token)):
     """
     Récupérer les entreprises par nom d'entreprise (firmName)
     """
+    # Vérification du rôle
+    if user.role != "admin" or user.role != "maintainer":
+        raise HTTPException(status_code=403, detail="Vous n'avez pas les droits nécessaires pour effectuer cette action")
+    
     query = text("SELECT nameFirm, location FROM entreprises WHERE nameFirm = :firm_name")
     result = conn.execute(query, firm_name=firm_name)
     data = result.fetchall()
@@ -98,12 +100,17 @@ def get_entreprises_by_firm_name(firm_name: str):
     return entreprises
 
 @router.post("/entreprises")
-def create_entreprise(firmName: str, location: str,  current_user: User = Depends(decode_token)):
+def create_entreprise(firmName: str, location: str,  user: User = Depends(decode_token)):
     """
-    Créer un nouvel utilisateur
+    Créer une nouvelle entreprise
     """
+    # Vérifier si l'entreprise existe déjà
     if entreprise_exists(firmName=firmName):
         raise HTTPException(status_code=409, detail="Une entreprise avec même nom existe déjà")
+    
+    # Vérification du rôle
+    if user.role != "admin" or user.role != "maintainer":
+        raise HTTPException(status_code=403, detail="Vous n'avez pas les droits nécessaires pour effectuer cette action")
 
     # Préparation de la requête SQL
     query = text("INSERT INTO entreprises (firmName, location) VALUES (:firmName, :location)")
@@ -116,20 +123,20 @@ def create_entreprise(firmName: str, location: str,  current_user: User = Depend
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.delete("/entreprises/{entreprise_id}")
-def delete_entreprise(entreprise_id: int,  current_user: User = Depends(decode_token)):
+def delete_entreprise(entreprise_id: int,  user: User = Depends(decode_token)):
     """
-    Supprimer une entreprise
+    Supprimer une entreprise par son ID
     """
     existing_entreprise = get_entreprise_by_id(entreprise_id)
     if not existing_entreprise:
         raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
     
-    # Vérification du rôle "maintainer"
-    if not current_user.maintainer:
+    # Vérification du rôle
+    if user.role != "admin" or user.role != "maintainer":
         raise HTTPException(status_code=403, detail="Vous n'avez pas les droits nécessaires pour effectuer cette action")
 
     # Vérification de l'ID de l'entreprise
-    if current_user.entreprise != existing_entreprise.entreprise:
+    if user.entreprise != existing_entreprise.entreprise:
         raise HTTPException(status_code=403, detail="Vous n'êtes pas autorisé à modifier cette entreprise")
     
     query = text("DELETE FROM entreprises WHERE id = :entreprise_id")
@@ -140,7 +147,7 @@ def delete_entreprise(entreprise_id: int,  current_user: User = Depends(decode_t
         raise HTTPException(status_code=500, detail=str(e))
     
 @router.patch("/entreprises/{entreprise_id}")
-def partial_update_entreprise(entreprise_id: int, entreprise_data: dict, current_user: User = Depends(decode_token)):
+def partial_update_entreprise(entreprise_id: int, entreprise_data: dict, user: User = Depends(decode_token)):
     """
     Mettre à jour partiellement une entreprise par son ID
     """    
@@ -148,13 +155,12 @@ def partial_update_entreprise(entreprise_id: int, entreprise_data: dict, current
     if not existing_entreprise:
         raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
     
-
-    # Vérification du rôle "maintainer"
-    if not current_user.maintainer:
+    # Vérification du rôle
+    if user.role != "admin" or user.role != "maintainer":
         raise HTTPException(status_code=403, detail="Vous n'avez pas les droits nécessaires pour effectuer cette action")
 
     # Vérification de l'ID de l'entreprise
-    if current_user.entreprise != existing_entreprise.entreprise:
+    if user.entreprise != existing_entreprise.entreprise:
         raise HTTPException(status_code=403, detail="Vous n'êtes pas autorisé à modifier cette entreprise")
     
     # Récupérer les données existantes de l'entreprise
