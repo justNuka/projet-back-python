@@ -28,7 +28,6 @@ Fonction qui permet de hasher un mot de passe
 def hash_password(password: str):
     return hashlib.sha256(f'{password}'.encode('utf-8')).hexdigest()
 
-
 """
 Fonction qui permet de vérifier si un utilisateur avec le meme mail OU le même nom ET prénom existe déjà
 """
