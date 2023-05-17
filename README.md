@@ -6,17 +6,23 @@ Un système de vérification y est implémenté :
   - Si un maintainer d'une entreprise différente de celle à laquelle il appartient tente de modifier une activité, un user, ou même des infos de l'entreprise, une erreur lui sera renvoyée.
 Pour pouvoir utiliser cette application, commencez par cloner le répo git, puis suivez les instructions ci-dessous.
 
-## Utilisation
+## Installation / Setup
 Utilisation de Docker (voir ci-dessous pour de plus ample informations)
-
-## Docker mode
 Pour pouvoir exécuter l'application, il faut dans un premier temps installer toutes les dépendances nécessaires : 
-  - Avoir installé Docker (Docker Desktop conseillé) et docker-compose installés.
-  - Avoir installé pip pour permettre l'installation des dépendances.
+  - Avoir installé Docker (Docker Desktop conseillé) ou uvicorn de python.
+  - Avoir installé python et pip pour permettre l'installation des dépendances.
   - Posséder un serveur Sql (Xampp, simple d'utilisation et pratique). Une fois installé, le lancer, puis aller à l'adresse suivante : http://localhost/phpmyadmin/index.php. Une fois ceci fait, créer une nouvelle base de données, la renommer en `projet-back-python`. Dès que cela est fait, allez dans importer, puis selectionnez le fichier `projet-back-python.sql`, et cliquez sur exécuter. La base de données est maintenant créée et opérationnelle sur votre poste.
-  - Installer les requirements : `pip install requirements.txt`
-Une fois que tout cela est fait, pour lancer l'application, votre terminal doit être dans le dossier racine de ce répo. Tapez ensuite :
-`docker-compose up --build`
+  - Installer les requirements : `pip install -r requirements.txt`
+
+## Run with Docker
+docker-compose up --build
+
+## Run with Uvicorn (python)
+uvicorn main:app --reload
 
 ## Run the application
-Une fois toutes les étapes du dessus effectuées, et l'application lancée, elle sera accessible à l'adresse : http://localhost:8080/docs. Vous pourrez alors tester les différents endpoints implémentés.
+Une fois toutes les étapes du dessus effectuées, et l'application lancée, elle sera accessible à l'adresse : http://localhost:8080/docs. 
+
+## Authentification
+N'oubliez pas de vous authentifier pour pouvoir accéder aux différentes fonctionnalités de l'app.
+Vous pourrez alors tester les différents endpoints implémentés.
