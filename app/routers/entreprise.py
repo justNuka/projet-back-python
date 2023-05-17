@@ -139,29 +139,6 @@ def delete_entreprise(entreprise_id: int,  current_user: User = Depends(decode_t
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-@router.put("/entreprises/{entreprise_id}")
-def update_entreprise(entreprise_id: int, firmName: str, location: str, current_user: User = Depends(decode_token)):
-    """
-    Mettre à jour une entreprise
-    """
-    existing_entreprise = get_entreprise_by_id(entreprise_id)
-    if not existing_entreprise:
-        raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
-    
-    # Vérification du rôle "maintainer"
-    if not current_user.maintainer:
-        raise HTTPException(status_code=403, detail="Vous n'avez pas les droits nécessaires pour effectuer cette action")
-
-    # Vérification de l'ID de l'entreprise
-    if current_user.entreprise != existing_entreprise.entreprise:
-        raise HTTPException(status_code=403, detail="Vous n'êtes pas autorisé à modifier cette entreprise")
-    query = text("UPDATE entreprises SET firmName = :firmName, location = :location WHERE id = :entreprise_id")
-    try:
-        conn.execute(query, firmName=firmName, location=location, entreprise_id=entreprise_id)
-        return {"message": "Entreprise mise à jour avec succès"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
 @router.patch("/entreprises/{entreprise_id}")
 def partial_update_entreprise(entreprise_id: int, entreprise_data: dict, current_user: User = Depends(decode_token)):
     """

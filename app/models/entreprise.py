@@ -14,3 +14,9 @@ class Entreprise(BaseModel):
     location: str
     users: list[User] = []
     plannings: list[Activite] = []
+
+class EntrepriseChangeableFields(BaseModel):
+    nameFirm: str = None
+    location: str = None
+    users: list[User] = []
+    plannings: list[Activite] = []

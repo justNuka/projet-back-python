@@ -5,28 +5,22 @@ import hashlib
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import text
 import rsa
-from pydantic import Depends
+from fastapi import Depends
 # Local Imports
 from models.user import User
 from config.db import conn
-from auth.auth import is_maintainer 
-from auth.auth import entrepriseConnectee
-from auth.auth import decode_token
+from auth.auth import decode_token, role, entrepriseConnectee
+from auth.auth import loadKeys, public_key, private_key
 
 router = APIRouter()
-
-# Fonctions qui seront amenées à être utilisées dans le fichier
-
-"""
-Fonction de génération des clés RSA
-"""
-public_key, private_key = rsa.newkeys(512)
 
 with open('public.pem', mode='wb') as f:
     f.write(public_key.save_pkcs1())
 
 with open('private_key', mode='wb') as f:
     f.write(private_key.save_pkcs1())
+
+# Fonctions qui seront amenées à être utilisées dans le fichier
 
 """
 Fonction qui permet de hasher un mot de passe  
@@ -213,45 +207,6 @@ async def delete_user(user_id: int, user: User = Depends(decode_token)):
     try:
         conn.execute(query, user_id=user_id)
         return {"message": "Utilisateur supprimé avec succès"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-
-@router.put("/users/{user_id}")
-def update_user(user_id: int, user_data: dict, current_user: User = Depends(decode_token)):
-    """
-    Mettre à jour un utilisateur par son ID
-    """
-    existing_user = get_user_by_id(user_id)
-    if not existing_user:
-        raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
-
-    # Vérification du rôle "maintainer"
-    if not current_user.maintainer:
-        raise HTTPException(status_code=403, detail="Vous n'avez pas les droits nécessaires pour effectuer cette action")
-
-    # Vérification de l'ID de l'entreprise
-    if current_user.entreprise != existing_user.entreprise:
-        raise HTTPException(status_code=403, detail="Vous n'êtes pas autorisé à modifier cet utilisateur")
-
-    # Chiffrement des nouvelles données avec la clé publique
-    encrypted_name = rsa.encrypt(user_data["name"].encode('utf-8'), public_key)
-    encrypted_surname = rsa.encrypt(user_data["surname"].encode('utf-8'), public_key)
-    encrypted_email = rsa.encrypt(user_data["email"].encode('utf-8'), public_key)
-    encrypted_tel = rsa.encrypt(user_data["tel"].encode('utf-8'), public_key)
-
-    query = text("UPDATE users SET name = :name, surname = :surname, email = :email, tel = :tel WHERE id = :user_id")
-    try:
-        conn.execute(
-            query,
-            name=encrypted_name,
-            surname=encrypted_surname,
-            email=encrypted_email,
-            tel=encrypted_tel,
-            user_id=user_id,
-        )
-        return {"message": "Utilisateur mis à jour avec succès"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

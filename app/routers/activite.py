@@ -156,25 +156,6 @@ def delete_activite(activite_id: int, current_user: User = Depends(decode_token)
         return {"message": "Activité supprimée avec succès"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
-@router.put("/activites/{activite_id}")
-def update_activite(activite_id: int, title: str, entreprise: int, user: int, created_by: int, start_date: str, end_date: str, description: str, city: str, address: str, zipCode: str, country: str, current_user: User = Depends(decode_token)):
-    """
-    Mettre à jour une activite par son ID
-    """
-    if not is_maintainer(current_user):
-        raise HTTPException(status_code=401, detail="Vous n'êtes pas autorisé à effectuer cette action")
-
-    existing_activite = get_activite_by_id(activite_id)
-    if not existing_activite:
-        raise HTTPException(status_code=404, detail="Activité non trouvée")
-
-    query = text("UPDATE activites SET title = :title, entreprise = :entreprise, user = :user, created_by = :created_by, start_date = :start_date, end_date = :end_date, description = :description, city = :city, address = :address, zipCode = :zipCode, country = :country WHERE id = :activite_id")
-    try:
-        conn.execute(query, title=title, entreprise=entreprise, user=user, created_by=created_by, start_date=start_date, end_date=end_date, description=description, city=city, address=address, zipCode=zipCode, country=country, activite_id=activite_id)
-        return {"message": "Activité mise à jour avec succès"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 @router.patch("/activites/{activite_id}")
 def update_activite(activite_id: int, activite_data: dict, current_user: User = Depends(decode_token)):

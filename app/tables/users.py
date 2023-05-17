@@ -13,7 +13,7 @@ users = Table(
     Column("name",LargeBinary),
     Column("surname",LargeBinary),
     Column("email",LargeBinary),
-    Column("password_hash",String(255)),
+    Column("password",String(255)),
     Column("tel",LargeBinary),
     Column("maintainer",Boolean),
 )
