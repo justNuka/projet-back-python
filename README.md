@@ -15,10 +15,10 @@ Pour pouvoir exécuter l'application, il faut dans un premier temps installer to
   - Installer les requirements : `pip install -r requirements.txt`
 
 ## Run with Docker
-docker-compose up --build
+`docker-compose up --build `
 
 ## Run with Uvicorn (python)
-uvicorn main:app --reload
+`uvicorn main:app --reload `
 
 ## Run the application
 Une fois toutes les étapes du dessus effectuées, et l'application lancée, elle sera accessible à l'adresse : http://localhost:8080/docs. 
